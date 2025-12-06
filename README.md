@@ -20,6 +20,8 @@ This repository contains two main systems:
    - Exposes a REST API: `POST /stylize` (accepts `content` + `style` images; returns stylized JPG)
 
 ---
+##Preview
+<img width="1896" height="834" alt="image" src="https://github.com/user-attachments/assets/1503b239-f9e7-46af-b70b-b9c85d90b8a5" />
 
 ## ⭐ Features
 
