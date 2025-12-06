@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AI Vision — NST & Medical Classifier</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tiny custom styles + subtle animations -->
+    <style>
+      /* Glass card */
+      .glass {
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: 0 6px 20px rgba(2, 6, 23, 0.6);
+      }
+      /* soft glow accent */
+      .accent-glow {
+        box-shadow: 0 6px 30px rgba(59, 130, 246, 0.12),
+          0 2px 6px rgba(59, 130, 246, 0.06);
+      }
+      /* animated button */
+      .btn-anim:hover {
+        transform: translateY(-3px) scale(1.01);
+        transition: 0.22s ease;
+      }
+      /* fade in */
+      .fade-in {
+        animation: fadeIn 0.45s ease both;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      /* small loader */
+      .loader {
+        border-top-color: rgba(255, 255, 255, 0.9);
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      /* subtle file preview */
+      .img-preview {
+        max-height: 360px;
+        object-fit: contain;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-b from-[#071025] to-[#07121a] text-slate-100 antialiased"
+  >
+    <div class="max-w-[1150px] mx-auto p-6">
+      <header class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight">
+            AI Vision — <span class="text-sky-400">NST</span> &
+            <span class="text-emerald-400">Medical</span>
+          </h1>
+          <p class="text-slate-400 mt-1 text-sm">
+            Upload images, run models locally, download outputs.
+          </p>
+        </div>
+
+        <div class="text-right">
+          <a
+            href="file:///mnt/data/Dev_Project.docx"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg glass accent-glow text-sm"
+            title="Project doc"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-sky-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M7 7h10M7 11h6M7 15h6M7 19h10"
+              />
+            </svg>
+            Project Doc
+          </a>
+        </div>
+      </header>
+
+      <main class="grid md:grid-cols-2 gap-6">
+        <!-- NST Card -->
+        <section class="glass p-6 rounded-xl fade-in">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-xl font-semibold">🎨 Neural Style Transfer</h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Upload one content image and one style image (JPG). Output is a
+                stylized JPG you can download.
+              </p>
+            </div>
+            <div class="text-sm text-slate-400">
+              <span class="inline-block px-2 py-1 rounded bg-white/3"
+                >POST /stylize</span
+              >
+            </div>
+          </div>
+
+          <div class="grid gap-3 md:grid-cols-2 mt-5">
+            <div class="flex flex-col gap-3">
+              <!-- content -->
+              <label class="block text-xs font-medium text-slate-300"
+                >Content</label
+              >
+              <div
+                class="p-3 rounded-lg border border-white/6 flex items-center gap-3"
+              >
+                <input
+                  id="contentFile"
+                  accept="image/jpeg"
+                  type="file"
+                  class="w-full text-sm text-slate-200"
+                />
+              </div>
+
+              <!-- style -->
+              <label class="block text-xs font-medium text-slate-300 mt-2"
+                >Style</label
+              >
+              <div
+                class="p-3 rounded-lg border border-white/6 flex items-center gap-3"
+              >
+                <input
+                  id="styleFile"
+                  accept="image/jpeg"
+                  type="file"
+                  class="w-full text-sm text-slate-200"
+                />
+              </div>
+
+              <div class="flex gap-3 mt-4">
+                <button
+                  id="runNST"
+                  class="btn-anim px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-semibold shadow-sm"
+                >
+                  Generate
+                </button>
+                <button
+                  id="downloadNST"
+                  class="px-4 py-2 rounded-lg border border-white/8 text-sm text-slate-100/90 bg-slate-800/30"
+                  disabled
+                >
+                  Download
+                </button>
+                <button
+                  id="resetNST"
+                  class="px-3 py-2 rounded-lg text-sm text-slate-300 border border-white/6"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <div class="mt-3 flex items-center gap-3 text-sm text-slate-400">
+                <div
+                  id="nstSpinner"
+                  class="w-7 h-7 rounded-full border-2 border-white/10 loader hidden"
+                ></div>
+                <div id="nstStatus">Ready</div>
+              </div>
+            </div>
+
+            <!-- preview -->
+            <div class="flex flex-col items-center justify-center">
+              <div
+                class="w-full p-3 rounded-lg border border-white/6 bg-black/10 flex items-center justify-center"
+              >
+                <img
+                  id="nstPreview"
+                  class="img-preview hidden"
+                  alt="NST Output Preview"
+                />
+                <div id="nstEmpty" class="text-slate-500 text-sm">
+                  No stylized image yet
+                </div>
+              </div>
+
+              <div class="mt-3 text-xs text-slate-400"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Medical card -->
+        <section class="glass p-6 rounded-xl fade-in">
+          <div class="flex items-start justify-between">
+            <div>
+              <h2 class="text-xl font-semibold">
+                🩺 Medical Image Classification
+              </h2>
+              <p class="text-slate-400 text-sm mt-1">
+                Upload a medical image (JPG/PNG). Model returns &mdash; label,
+                confidence and percent.
+              </p>
+            </div>
+            <div class="text-sm text-slate-400">
+              <span class="inline-block px-2 py-1 rounded bg-white/3"
+                >POST /predict</span
+              >
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <label class="block text-xs font-medium text-slate-300"
+              >Medical image</label
+            >
+            <div
+              class="p-3 rounded-lg border border-white/6 flex items-center gap-3"
+            >
+              <input
+                id="medicalFile"
+                accept="image/*"
+                type="file"
+                class="w-full text-sm text-slate-200"
+              />
+            </div>
+
+            <div class="flex gap-3 mt-4">
+              <button
+                id="runMed"
+                class="btn-anim px-4 py-2 rounded-lg bg-emerald-500 text-white font-semibold"
+              >
+                Analyze
+              </button>
+              <button
+                id="downloadJson"
+                class="px-4 py-2 rounded-lg border border-white/8 bg-slate-800/30 text-slate-100/90"
+                disabled
+              >
+                Download JSON
+              </button>
+              <button
+                id="resetMed"
+                class="px-3 py-2 rounded-lg text-sm text-slate-300 border border-white/6"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div class="mt-4">
+              <div
+                id="medSpinner"
+                class="w-7 h-7 rounded-full border-2 border-white/10 loader hidden"
+              ></div>
+              <div id="medStatus" class="text-slate-400 text-sm mt-2">Idle</div>
+
+              <pre
+                id="medOut"
+                class="mt-4 p-3 rounded-md bg-black/20 text-sm text-emerald-200 hidden"
+                style="white-space: pre-wrap"
+              ></pre>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="mt-8 text-center text-slate-500 text-xs">
+        • 7th Sem Project. • Run both servers locally (NST: 9090, Medical: 5001)
+      </footer>
+    </div>
+
+    <!-- Script logic -->
+    <script>
+      // API endpoints (edit if needed)
+      const NST_URL = "http://127.0.0.1:9090/stylize"; // as you specified
+      const MED_URL = "http://127.0.0.1:5001/predict";
+
+      // NST elements
+      const contentInput = document.getElementById("contentFile");
+      const styleInput = document.getElementById("styleFile");
+      const runNSTBtn = document.getElementById("runNST");
+      const resetNSTBtn = document.getElementById("resetNST");
+      const nstPreview = document.getElementById("nstPreview");
+      const nstEmpty = document.getElementById("nstEmpty");
+      const nstStatus = document.getElementById("nstStatus");
+      const nstSpinner = document.getElementById("nstSpinner");
+      const downloadNSTBtn = document.getElementById("downloadNST");
+
+      // Medical elements
+      const medInput = document.getElementById("medicalFile");
+      const runMedBtn = document.getElementById("runMed");
+      const medStatus = document.getElementById("medStatus");
+      const medSpinner = document.getElementById("medSpinner");
+      const medOut = document.getElementById("medOut");
+      const downloadJsonBtn = document.getElementById("downloadJson");
+      const resetMedBtn = document.getElementById("resetMed");
+
+      // helper
+      function showSpinner(el, yes) {
+        el.classList.toggle("hidden", !yes);
+      }
+      function setStatus(el, text) {
+        el.textContent = text;
+      }
+
+      // NST flow
+      let lastNSTBlob = null;
+      runNSTBtn.onclick = async () => {
+        const contentFile = contentInput.files[0];
+        const styleFile = styleInput.files[0];
+        if (!contentFile || !styleFile) {
+          alert("Upload BOTH content and style (JPG)");
+          return;
+        }
+
+        setStatus(nstStatus, "Uploading & processing...");
+        showSpinner(nstSpinner, true);
+        nstEmpty.classList.add("hidden");
+        nstPreview.classList.add("hidden");
+
+        try {
+          const fd = new FormData();
+          fd.append("content", contentFile);
+          fd.append("style", styleFile);
+
+          const res = await fetch(NST_URL, { method: "POST", body: fd });
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error("Server error: " + res.status + " - " + txt);
+          }
+          const blob = await res.blob();
+          lastNSTBlob = blob;
+          const url = URL.createObjectURL(blob);
+          nstPreview.src = url;
+          nstPreview.classList.remove("hidden");
+          setStatus(nstStatus, "Done");
+          downloadNSTBtn.disabled = false;
+        } catch (err) {
+          setStatus(nstStatus, "Error: " + (err.message || err));
+          alert("NST failed: " + err.message);
+        } finally {
+          showSpinner(nstSpinner, false);
+        }
+      };
+
+      downloadNSTBtn.onclick = () => {
+        if (!lastNSTBlob) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(lastNSTBlob);
+        a.download = "stylized_output.jpg";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+
+      resetNSTBtn.onclick = () => {
+        contentInput.value = "";
+        styleInput.value = "";
+        nstPreview.src = "";
+        nstPreview.classList.add("hidden");
+        nstEmpty.classList.remove("hidden");
+        lastNSTBlob = null;
+        downloadNSTBtn.disabled = true;
+        setStatus(nstStatus, "Ready");
+      };
+
+      // Medical flow
+      let lastMedJson = null;
+      runMedBtn.onclick = async () => {
+        const file = medInput.files[0];
+        if (!file) {
+          alert("Please upload a medical image");
+          return;
+        }
+
+        setStatus(medStatus, "Uploading & analyzing...");
+        showSpinner(medSpinner, true);
+        medOut.classList.add("hidden");
+        downloadJsonBtn.disabled = true;
+
+        try {
+          const fd = new FormData();
+          fd.append("image", file);
+
+          const res = await fetch(MED_URL, { method: "POST", body: fd });
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error("Server error: " + res.status + " - " + txt);
+          }
+          const data = await res.json();
+          lastMedJson = data;
+          medOut.textContent = JSON.stringify(data, null, 2);
+          medOut.classList.remove("hidden");
+          downloadJsonBtn.disabled = false;
+          setStatus(medStatus, "Done");
+        } catch (err) {
+          setStatus(medStatus, "Error: " + (err.message || err));
+          alert("Medical inference failed: " + err.message);
+        } finally {
+          showSpinner(medSpinner, false);
+        }
+      };
+
+      downloadJsonBtn.onclick = () => {
+        if (!lastMedJson) return;
+        const blob = new Blob([JSON.stringify(lastMedJson, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "medical_result.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+
+      resetMedBtn.onclick = () => {
+        medInput.value = "";
+        medOut.textContent = "";
+        medOut.classList.add("hidden");
+        downloadJsonBtn.disabled = true;
+        setStatus(medStatus, "Idle");
+      };
+
+      // quick connectivity check
+      (async function pingServices() {
+        try {
+          await fetch(NST_URL, { method: "OPTIONS" });
+        } catch (e) {
+          /* ignore */
+        }
+        try {
+          await fetch(MED_URL, { method: "OPTIONS" });
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
+  </body>
+</html>
