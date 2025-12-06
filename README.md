@@ -34,6 +34,20 @@ This repository contains two main systems:
 
 ---
 
+## ⚙️ Requirements
+
+- Python 3.10+  
+- TensorFlow 2.x  
+- pip packages in `requirements.txt` (NumPy, Pillow, Flask, Flask-CORS, scikit-learn, matplotlib, etc.)
+
+Install:
+
+```bash
+python -m venv venv
+source venv/bin/activate     # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+
 ## 📁 Repo Structure (high-level)
 
 ├─ Final/ # main code: API servers, inference, utils
