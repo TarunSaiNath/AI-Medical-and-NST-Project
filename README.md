@@ -1,10 +1,4 @@
 # AI-Medical-and-NST-Project
-<!-- banner -->
-<p align="center">
-  <img src="assets/banner.svg" alt="AI Medical + NST Project" width="900"/>
-</p>
-
-# AI Vision — Medical Image Classification & Neural Style Transfer
 
 **Custom VGG19-based medical image classifier (pneumonia & skin cancer)** and **Neural Style Transfer (NST)** feature extractor, wrapped as Flask APIs and served with a modern TailwindCSS frontend.
 
