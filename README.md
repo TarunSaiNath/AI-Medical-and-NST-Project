@@ -2,9 +2,6 @@
 
 **Custom VGG19-based medical image classifier (pneumonia & skin cancer)** and **Neural Style Transfer (NST)** feature extractor, wrapped as Flask APIs and served with a modern TailwindCSS frontend.
 
-**Authors:** Tarun Sai Nath, Manish Kumar Das, Purbasha Nayak  
-**Guide:** Dr. Nibedan Panda
-
 ---
 
 ## 🔎 Project Overview
